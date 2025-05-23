@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from telethon import TelegramClient
 from telethon.errors import UsernameNotOccupiedError, PeerIdInvalidError
 import asyncio
+import os
 
 api_id = 27762792
 api_hash = '9738786356de12185e59b8d2f35863a9'
@@ -16,6 +17,22 @@ async def fetch_user(q):
         else:
             user = await client.get_entity(q)
         return user
+
+
+@app.route('/debug', methods=['GET'])
+def debug():
+    filename = 'session.session'  # tên file session bạn dùng
+    can_read = os.access(filename, os.R_OK)
+    can_write = os.access(filename, os.W_OK)
+    file_exists = os.path.exists(filename)
+
+    return jsonify({
+        'file': filename,
+        'exists': file_exists,
+        'can_read': can_read,
+        'can_write': can_write,
+    })
+
 
 @app.route('/get_user', methods=['GET'])
 def get_user():
