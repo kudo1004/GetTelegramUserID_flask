@@ -59,4 +59,4 @@ def get_user():
         return jsonify({'telegram': "@kudo1004", 'error': 1, 'message': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, use_reloader=False)
+    app.run(debug=True)
