@@ -3,24 +3,19 @@ from telethon import TelegramClient
 from telethon.errors import UsernameNotOccupiedError, PeerIdInvalidError
 import asyncio
 
-api_id = 27762792  # ← Thay bằng của bạn
+api_id = 27762792
 api_hash = '9738786356de12185e59b8d2f35863a9'
-session_name = 'session'
+session_name = 'session'  # file session sẽ tạo trong cùng thư mục
 
 app = Flask(__name__)
 
-# Tạo loop mới 100% không bị lỗi trên Python 3.10+
-loop = asyncio.new_event_loop()
-asyncio.set_event_loop(loop)
-
-client = TelegramClient(session_name, api_id, api_hash, loop=loop)
-
-# Khởi động Telegram client
-async def startup():
-    await client.start()
-    print("✅ Telegram client started")
-
-loop.run_until_complete(startup())
+async def fetch_user(q):
+    async with TelegramClient(session_name, api_id, api_hash) as client:
+        if q.isdigit():
+            user = await client.get_entity(int(q))
+        else:
+            user = await client.get_entity(q)
+        return user
 
 @app.route('/get_user', methods=['GET'])
 def get_user():
@@ -29,11 +24,7 @@ def get_user():
         return jsonify({'telegram': "@kudo1004", 'error': 1, 'message': 'Thiếu tham số ?q=username hoặc ?q=id'}), 400
 
     try:
-        if q.isdigit():
-            user = loop.run_until_complete(client.get_entity(int(q)))
-        else:
-            user = loop.run_until_complete(client.get_entity(q))
-
+        user = asyncio.run(fetch_user(q))  # Tạo event loop mới, chạy async function
         return jsonify({
             'telegram': "@kudo1004",
             'id': user.id,
@@ -48,10 +39,9 @@ def get_user():
             'restricted': user.restricted,
             'premium': user.premium,
             'lang_code': user.lang_code,
-            'status': str(user.status),  # chuyển status thành chuỗi
+            'status': str(user.status),
             'has_profile_photo': user.photo is not None,
-})
-
+        })
 
     except (UsernameNotOccupiedError, PeerIdInvalidError):
         return jsonify({'telegram': "@kudo1004", 'error': 1, 'message': 'Không tìm thấy người dùng'}), 404
